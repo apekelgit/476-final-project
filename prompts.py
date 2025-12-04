@@ -17,7 +17,11 @@ def parse_user_prompt(question: Question, inferenceAlg: str) -> str:
 
     if inferenceAlg:
         prompt.append(f"INFERENCE ALGORITHM: {inferenceAlg}\n")
-    
+
+    if inferenceAlg == "CoT":
+        prompt.append("INSTRUCTIONS: Think through the problem step-by-step before providing the final answer. You may include intermediate reasoning. \n")
+
+
     prompt.append("INSTRUCTIONS: Provide ONLY the final answer to the question above. Do NOT include any explanations or reasoning steps.\n")
     prompt.append("FINAL ANSWER:")
 
