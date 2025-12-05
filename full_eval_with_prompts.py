@@ -78,7 +78,7 @@ def evaluate_dev_data(path: str, limit: int | None = None):
     rows = []
 
     for i, q in enumerate(questions, start=1):
-        user_prompt = parse_user_prompt(q, inferenceAlg="cot")
+        user_prompt = parse_user_prompt(q, inferenceAlg="CoT")
 
         resp = call_model_chat_completions(
             prompt=user_prompt,
@@ -112,4 +112,5 @@ def evaluate_dev_data(path: str, limit: int | None = None):
     print(f"\naccuracy: {correct}/{total}")
 
 if __name__ == "__main__":
+
     evaluate_dev_data("cse476_final_project_dev_data.json", limit=50)
