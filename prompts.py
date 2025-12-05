@@ -67,3 +67,6 @@ def extract_final_answer(model_response: str) -> str:
     last = re.sub(r"^FINAL ANSWER\s*:\s*", "", last, flags=re.IGNORECASE)
     last = last.strip("$ ").strip()
     return last
+
+DEFAULT_INFERENCE_PIPELINE = ["cot", "self_consistency", "self_critique"]
+
