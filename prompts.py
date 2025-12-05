@@ -19,16 +19,23 @@ def parse_user_prompt(question: Question, inferenceAlg: str) -> str:
         prompt.append(f"INFERENCE ALGORITHM: {inferenceAlg}\n")
 
     if inferenceAlg == "CoT":
-        prompt.append("INSTRUCTIONS: Think through the problem step-by-step before providing the final answer. You may include intermediate reasoning. \n")
+        prompt.append("INSTRUCTIONS: Think through the problem step-by-step before providing the final answer. You may include intermediate reasoning."
+                      "After solving the problem, ouput one line that starts with 'FINAL ANSWER:' followed by the final answer. DO NOT INCLUDE ANYTHING AFTER THE FINAL ANSWER LINE.")
+        
+    else:
+        prompt.append("INSTRUCTIONS: Provide ONLY the final answer to the question above. Do NOT include any explanations or reasoning steps.\n")
 
-
-    prompt.append("INSTRUCTIONS: Provide ONLY the final answer to the question above. Do NOT include any explanations or reasoning steps.\n")
     prompt.append("FINAL ANSWER:")
 
     return "\n".join(prompt)
 
 def extract_final_answer(model_response: str) -> str:
-    final_response_line = [line for line in model_response.splitlines() if line.strip() != ''][-1]
+    lines = [line for line in model_response.splitlines() if line.strip() != ""]
+    if not lines:
+        return ""
+    
+    final_response_line = lines[-1]
+
     match = re.search(r"FINAL ANSWER:\s*(.*)", final_response_line)
     if match:
         return match.group(1).strip()
