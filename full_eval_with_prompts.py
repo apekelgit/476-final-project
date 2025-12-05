@@ -1,5 +1,7 @@
 from api_client import call_model_chat_completions
 from prompts import (Question, model_foundation, parse_user_prompt, extract_final_answer)
+from strategies import solve_self_consistency_cot
+from agent import solve_auto
 
 import re
 import time
@@ -78,16 +80,11 @@ def evaluate_dev_data(path: str, limit: int | None = None):
     rows = []
 
     for i, q in enumerate(questions, start=1):
-        user_prompt = parse_user_prompt(q, inferenceAlg="CoT")
-
-        resp = call_model_chat_completions(
-            prompt=user_prompt,
-            system=model_foundation,
-            temperature=0.0,
+        pred, raw_text, num_calls = solve_auto(
+            q,
+            num_samples=5,
+            sc_temperature=0.7,
         )
-
-        raw_text = (resp.get("text") or "").strip()
-        pred = extract_final_answer(raw_text)
 
         kind = infer_kind(q.answer, q.domain, q.input)
         is_correct = grade(q.answer, pred, kind)
@@ -112,5 +109,4 @@ def evaluate_dev_data(path: str, limit: int | None = None):
     print(f"\naccuracy: {correct}/{total}")
 
 if __name__ == "__main__":
-
-    evaluate_dev_data("cse476_final_project_dev_data.json", limit=50)
+    evaluate_dev_data("cse476_final_project_dev_data.json", limit=5)
