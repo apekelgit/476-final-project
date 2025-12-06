@@ -18,6 +18,7 @@ def solve_auto(
             question=question,
             num_samples=num_samples,
             temperature=sc_temperature,
+            debug=True,
         )
         if ans:
             return ans, "\n\n".join(raws), num_samples

@@ -61,6 +61,7 @@ def solve_self_consistency_cot(
     num_samples: int = 5,
     temperature: float = 0.7,
     max_tokens: int = 512,
+    debug: bool = False,
 ) -> tuple[str, list[str]]:
 
     answers = []
@@ -77,10 +78,17 @@ def solve_self_consistency_cot(
             answers.append(ans)
 
     if not answers:
+        if debug:
+            print("No parsed answers found.", flush=True)
         return "", raw_outputs
 
     counts = Counter(answers)
     voted_answer, _ = max(counts.items(), key=lambda kv: kv[1])
+
+    if debug:
+        print("Parsed answers:", answers, flush=True)
+        print("Vote counts:", dict(counts), flush=True)
+        print("Voted answer:", voted_answer, flush=True)
 
     return voted_answer, raw_outputs
 

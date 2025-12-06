@@ -69,7 +69,7 @@ def load_dev_data(path: str):
 
     return questions
 
-def evaluate_dev_data(path: str, limit: int | None = None):
+def evaluate_dev_data(path: str, limit: int | None = None, debug_n: int = 3):
     questions = load_dev_data(path)
 
     if limit is not None:
@@ -77,12 +77,13 @@ def evaluate_dev_data(path: str, limit: int | None = None):
 
     total = len(questions)
     correct = 0
-    rows = []
 
     for i, q in enumerate(questions, start=1):
+        debug_mode = i <= debug_n
+
         pred, raw_text, num_calls = solve_auto(
             q,
-            num_samples=5,
+            num_samples=3 if debug_mode else 5,
             sc_temperature=0.7,
         )
 
@@ -92,21 +93,25 @@ def evaluate_dev_data(path: str, limit: int | None = None):
         if is_correct:
             correct += 1
 
-        row = {
-            "id": q.questionID,
-            "domain": q.domain,
-            "input": q.input,
-            "expected": q.answer,
-            "prediction": pred,
-            "correct": is_correct,
-        }
-        rows.append(row)
+        if debug_mode:
+            print("_______________________________________", flush=True)
+            print(f"DEBUG Example {i}/{total}", flush=True)
+            print("ID:       ", q.questionID, flush=True)
+            print("Domain:   ", q.domain, flush=True)
+            print("Question: ", q.input, flush=True)
+            print("Expected: ", repr(q.answer), flush=True)
+            print("Kind:     ", kind, flush=True)
+            print("Pred:     ", repr(pred), flush=True)
+            print("LLM calls used:", num_calls, flush=True)
+            print("\nRaw text:", flush=True)
+            print(raw_text[:800], flush=True)
+            print("_______________________________________", flush=True)
 
-        if i % 50 == 0 or i == total:
-            print(f"Processed {i}/{total} questions...")
+        if i % 25 == 0 or i == total:
+            print(f"Processed {i}/{total} questions...", flush=True)
 
-    accuracy = correct / max(total, 1)
     print(f"\naccuracy: {correct}/{total}")
+
 
 if __name__ == "__main__":
     evaluate_dev_data("cse476_final_project_dev_data.json", limit=5)
