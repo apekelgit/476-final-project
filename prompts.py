@@ -26,15 +26,16 @@ def parse_user_prompt(question: Question, inferenceAlg: str) -> str:
 
     if alg == "cot":
         lines.append(
-            "INSTRUCTIONS: Think through the problem step-by-step. "
-            "After solving, output EXACTLY one final line in the format:\n"
+            "INSTRUCTIONS: Think through the problem step-by-step privately. "
+            "Do NOT show your reasoning. "
+            "Respond with EXACTLY one line in the format:\n"
             "FINAL ANSWER: <your answer>\n"
-            "Do NOT include anything after that line."
+            "Do NOT include anything else."
         )
     else:
         lines.append(
             "INSTRUCTIONS: Provide ONLY the final answer. "
-            "No explanation. Use the format:\n"
+            "Respond with EXACTLY one line in the format:\n"
             "FINAL ANSWER: <your answer>"
         )
 
@@ -67,6 +68,19 @@ def extract_final_answer(model_response: str) -> str:
     last = re.sub(r"^FINAL ANSWER\s*:\s*", "", last, flags=re.IGNORECASE)
     last = last.strip("$ ").strip()
     return last
+
+def extract_final_answer_strict(model_response: str) -> str:
+    if not model_response:
+        return ""
+
+    matches = re.findall(r"FINAL ANSWER\s*:\s*(.*)", model_response, flags=re.IGNORECASE)
+    if not matches:
+        return ""
+
+    candidate = matches[-1].strip()
+    candidate = candidate.strip("$ ").strip()
+    return candidate
+
 
 DEFAULT_INFERENCE_PIPELINE = ["cot", "self_consistency", "self_critique"]
 

@@ -85,6 +85,7 @@ def evaluate_dev_data(path: str, limit: int | None = None, debug_n: int = 3):
             q,
             num_samples=3 if debug_mode else 5,
             sc_temperature=0.7,
+            debug=debug_mode,
         )
 
         kind = infer_kind(q.answer, q.domain, q.input)

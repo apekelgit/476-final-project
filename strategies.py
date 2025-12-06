@@ -1,6 +1,21 @@
 from api_client import call_model_chat_completions
-from prompts import (Question, model_foundation, parse_user_prompt, extract_final_answer)
+from prompts import (Question, model_foundation, parse_user_prompt, extract_final_answer, extract_final_answer_strict)
 from collections import Counter
+import re
+
+def clean_candidate(ans: str) -> str:
+    ans = re.sub(r"^FINAL ANSWER\s*:\s*", "", ans, flags=re.IGNORECASE).strip()
+    ans = ans.strip("$ ").strip()
+    return ans
+
+def is_plausible_math_answer(ans: str) -> bool:
+    if not ans:
+        return False
+    if re.fullmatch(r"[-+]?\d+(\.\d+)?", ans):
+        return True
+    if re.fullmatch(r"[-+]?\d+/\d+", ans):
+        return True
+    return False
 
 
 class StrategyResult:
@@ -52,8 +67,17 @@ def solve_cot_once(
     )
 
     raw_text = (resp.get("text") or "").strip()
-    answer = extract_final_answer(raw_text)
+    answer = clean_candidate(extract_final_answer_strict(raw_text))
+    if not answer:
+        fallback = clean_candidate(extract_final_answer(raw_text))
+        if (question.domain or "").lower() == "math":
+            if is_plausible_math_answer(fallback):
+                answer = fallback
+        else:
+            answer = fallback
+
     return answer, raw_text
+
 
 
 def solve_self_consistency_cot(
@@ -74,23 +98,31 @@ def solve_self_consistency_cot(
             max_tokens=max_tokens,
         )
         raw_outputs.append(raw)
-        if ans:
-            answers.append(ans)
+
+        if (question.domain or "").lower() == "math":
+            if is_plausible_math_answer(ans):
+                answers.append(ans)
+        else:
+            if ans:
+                answers.append(ans)
+
+    if debug:
+        print("Parsed answers:", answers, flush=True)
 
     if not answers:
         if debug:
-            print("No parsed answers found.", flush=True)
+            print("No strict FINAL ANSWER candidates found.", flush=True)
         return "", raw_outputs
 
     counts = Counter(answers)
     voted_answer, _ = max(counts.items(), key=lambda kv: kv[1])
 
     if debug:
-        print("Parsed answers:", answers, flush=True)
         print("Vote counts:", dict(counts), flush=True)
         print("Voted answer:", voted_answer, flush=True)
 
     return voted_answer, raw_outputs
+
 
 
 class SelfConsistencyCoTStrategy:
