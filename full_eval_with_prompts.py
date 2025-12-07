@@ -79,11 +79,11 @@ def evaluate_dev_data(path: str, limit: int | None = None, debug_n: int = 3):
     correct = 0
 
     for i, q in enumerate(questions, start=1):
-        debug_mode = i <= debug_n
+        debug_mode = False#i <= debug_n
 
         pred, raw_text, num_calls = solve_auto(
             q,
-            num_samples=3 if debug_mode else 5,
+            num_samples=10 if debug_mode else 5,
             sc_temperature=0.7,
             debug=debug_mode,
         )
@@ -115,4 +115,4 @@ def evaluate_dev_data(path: str, limit: int | None = None, debug_n: int = 3):
 
 
 if __name__ == "__main__":
-    evaluate_dev_data("cse476_final_project_dev_data.json", limit=5)
+    evaluate_dev_data("cse476_final_project_dev_data.json", limit=10)

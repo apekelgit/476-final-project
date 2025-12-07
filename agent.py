@@ -8,17 +8,23 @@ def solve_auto(
     pipeline=None,
     num_samples: int = 5,
     sc_temperature: float = 0.7,
+    debug: bool = False,
 ):
 
     pipe = pipeline or DEFAULT_INFERENCE_PIPELINE
     pipe = [p.lower() for p in pipe]
 
+    domain = (question.domain or "").lower()
+    temp = sc_temperature
+    if domain == "math":
+        temp = min(sc_temperature, 0.4)
+
     if "self_consistency" in pipe:
         ans, raws = solve_self_consistency_cot(
             question=question,
             num_samples=num_samples,
-            temperature=sc_temperature,
-            debug=True,
+            temperature=temp,
+            debug=debug,
         )
         if ans:
             return ans, "\n\n".join(raws), num_samples
@@ -37,3 +43,4 @@ def solve_auto(
     raw = (resp.get("text") or "").strip()
     ans = extract_final_answer(raw)
     return ans, raw, 1
+

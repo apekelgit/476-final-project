@@ -11,11 +11,20 @@ def clean_candidate(ans: str) -> str:
 def is_plausible_math_answer(ans: str) -> bool:
     if not ans:
         return False
+    ans = ans.strip()
+
     if re.fullmatch(r"[-+]?\d+(\.\d+)?", ans):
         return True
+
     if re.fullmatch(r"[-+]?\d+/\d+", ans):
         return True
+
+    compact = ans.replace(" ", "")
+    if re.fullmatch(r"\\frac\{[-+]?\d+\}\{\d+\}", compact):
+        return True
+
     return False
+
 
 
 class StrategyResult:
@@ -78,8 +87,6 @@ def solve_cot_once(
 
     return answer, raw_text
 
-
-
 def solve_self_consistency_cot(
     question: Question,
     num_samples: int = 5,
@@ -115,15 +122,29 @@ def solve_self_consistency_cot(
         return "", raw_outputs
 
     counts = Counter(answers)
-    voted_answer, _ = max(counts.items(), key=lambda kv: kv[1])
+    voted_answer, top_count = max(counts.items(), key=lambda kv: kv[1])
+
+    low_consensus = (
+        top_count == 1 or
+        (num_samples == 3 and top_count == 2)
+    )
+
+    if low_consensus:
+        det_ans, det_raw = solve_cot_once(
+            question=question,
+            temperature=0.0,
+            max_tokens=max_tokens,
+        )
+        raw_outputs.append(det_raw)
+        if det_ans:
+            counts[det_ans] += 1
+            voted_answer, _ = max(counts.items(), key=lambda kv: kv[1])
 
     if debug:
         print("Vote counts:", dict(counts), flush=True)
         print("Voted answer:", voted_answer, flush=True)
 
     return voted_answer, raw_outputs
-
-
 
 class SelfConsistencyCoTStrategy:
     name = "SelfConsistencyCoT"
