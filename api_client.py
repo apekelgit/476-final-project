@@ -12,7 +12,7 @@ def call_model_chat_completions(
     model: str = MODEL,
     temperature: float = 0.0,
     timeout: int = 60,
-    max_tokens: int = 512,
+    max_tokens: int = 200,
 ) -> dict:
     """
     Wrapper around /v1/chat/completions.

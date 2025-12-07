@@ -174,3 +174,36 @@ class SelfConsistencyCoTStrategy:
             raw_text=combined_raw,
             num_calls=self.num_samples,
         )
+    
+def build_self_critique_prompt(question: Question, candidate: str) -> str:
+    return "\n".join([
+        f"DOMAIN: {question.domain}",
+        "QUESTION:",
+        question.input,
+        f"CANDIDATE ANSWER: {candidate}",
+        "INSTRUCTIONS: Check the candidate answer. "
+        "If it is wrong, compute the correct answer. "
+        "Respond with EXACTLY one line:",
+        "FINAL ANSWER: <your best answer>",
+        "FINAL ANSWER:",
+    ])
+
+
+def solve_self_critique(
+    question: Question,
+    candidate: str,
+    temperature: float = 0.0,
+    max_tokens: int = 256,
+):
+    prompt = build_self_critique_prompt(question, candidate)
+
+    resp = call_model_chat_completions(
+        prompt=prompt,
+        system=model_foundation,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    raw = (resp.get("text") or "").strip()
+    revised = extract_final_answer(raw)
+    return revised, raw
